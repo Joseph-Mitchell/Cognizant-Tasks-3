@@ -6,6 +6,7 @@ async function showAccountPrimaryContact(executionContext) {
     try {
         var contact = await retrieveContact(formContext);
         if (contact == null) {
+            executionContext.setSharedVariable("showAccountPrimaryContactFlags", { saveNewPrimaryContact: true });
             makeContactMandatory(formContext);
         } else {       
             populateForm(formContext, contact);
@@ -19,7 +20,7 @@ async function showAccountPrimaryContact(executionContext) {
 }
 
 async function retrieveContact(formContext) {
-    var customerAttribute = checkCustomerAttributeExists(formContext);  
+    var customerAttribute = getCustomerAttribute(formContext);  
     
     var customerRecord = getCustomerRecord(customerAttribute);
     if (customerRecord.entityType != "account")
@@ -37,7 +38,7 @@ async function retrieveContact(formContext) {
     }
 }
 
-function checkCustomerAttributeExists(formContext) {
+function getCustomerAttribute(formContext) {
     var customerAttribute = formContext.getAttribute("customerid");
     if (customerAttribute == null)
         throw new Error("The Customer attribute could not be found in the Case table.");
