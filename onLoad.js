@@ -1,13 +1,13 @@
 async function showAccountPrimaryContact(executionContext) {
     var formContext = executionContext.getFormContext();
     
-    executionContext.getFormContext().ui.setFormNotification("v24", "INFO", "SAPC0001");
+    executionContext.getFormContext().ui.setFormNotification("v26", "INFO", "SAPC0001");
     
     try {
         var contact = await retrieveContact(formContext);
         if (contact == null) {
             executionContext.setSharedVariable("showAccountPrimaryContactFlags", { saveNewPrimaryContact: true });
-            makeContactMandatory(formContext);
+            toggleContactMandatory(formContext, true);
         } else {       
             populateForm(formContext, contact);
             hideEmptyFields(formContext, contact);
@@ -16,6 +16,34 @@ async function showAccountPrimaryContact(executionContext) {
         //End script if no error message, otherwise displays message in an error dialogue
         if (e.message)
             Xrm.Navigation.openErrorDialog({ message: e.message });
+    }
+}
+
+async function saveContactIfRequired(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+    if (!executionContext.getSharedVariable("showAccountPrimaryContactFlags").saveNewPrimaryContact)
+        return;
+    
+    var accountId = formContext.getAttribute("customerid").getValue()[0].id;
+    var contactId = formContext.getAttribute("primarycontactid").getValue()[0].id;
+    await saveAccountPrimaryContact(accountId, contactId);
+    
+    executionContext.getSharedVariable("showAccountPrimaryContactFlags", { saveNewPrimaryContact: false });
+    toggleContactMandatory(formContext, false);
+}
+
+async function saveAccountPrimaryContact(accountId, contactId) {
+    try {
+        await Xrm.WebApi.updateRecord(
+            "account",
+            accountId,
+            {
+                "primarycontactid@odata.bind": `/contacts(${contactId})`
+            }
+        );
+    } catch {
+        Xrm.Navigation.openErrorDialog({ message: "Error saving primary contact to account" });
     }
 }
 
@@ -54,15 +82,20 @@ function getCustomerRecord(customerAttribute) {
     return customerRecordArray[0];
 }
 
-function makeContactMandatory(formContext) {
+function toggleContactMandatory(formContext, mandatory) {
     var contactAttribute = formContext.getAttribute("primarycontactid");
     var contactControl = contactAttribute.controls.get((control) => {
         if (control.controlDescriptor.Label == "Account Primary Contact")
             return true;
     })[0];
     
-    contactAttribute.setRequiredLevel("required");
-    contactControl.setVisible(true);
+    if (mandatory) {
+        contactAttribute.setRequiredLevel("required");
+        contactControl.setVisible(true);
+    } else {
+        contactAttribute.setRequiredLevel("none");
+        contactControl.setVisible(false);
+    }
 }
 
 function populateForm(formContext, contact) {   
