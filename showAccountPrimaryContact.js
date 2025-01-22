@@ -1,7 +1,7 @@
 async function showAccountPrimaryContact(executionContext) {
     var formContext = executionContext.getFormContext();
     
-    executionContext.getFormContext().ui.setFormNotification("v27", "INFO", "SAPC0001");
+    executionContext.getFormContext().ui.setFormNotification("v29", "INFO", "SAPC0001");
     
     try {
         var contact = await retrieveContact(formContext);
@@ -21,12 +21,13 @@ async function showAccountPrimaryContact(executionContext) {
 async function saveContactIfRequired(executionContext) {
     var formContext = executionContext.getFormContext();
 
-    if (formContext.getAttribute("primarycontactid").getRequiredLevel() != "required")
+    var contactAttribute = formContext.getAttribute("primarycontactid");
+    if (contactAttribute.getRequiredLevel() != "required")
         return;
     
     var accountId = formContext.getAttribute("customerid").getValue()[0].id;
-    var contactId = formContext.getAttribute("primarycontactid").getValue()[0].id;
-    await saveAccountPrimaryContact(accountId, contactId);
+    var contactId = contactAttribute.getValue()[0].id;
+    await saveAccountPrimaryContact(accountId, contactId.slice(1, contactId.length-1));
     
     toggleContactMandatory(formContext, false);
 }
