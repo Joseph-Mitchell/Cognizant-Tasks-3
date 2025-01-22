@@ -1,7 +1,7 @@
 async function showAccountPrimaryContact(executionContext) {
     var formContext = executionContext.getFormContext();
     
-    executionContext.getFormContext().ui.setFormNotification("v23", "INFO", "SAPC0001");
+    executionContext.getFormContext().ui.setFormNotification("v24", "INFO", "SAPC0001");
     
     try {
         var contact = await retrieveContact(formContext);
@@ -61,7 +61,7 @@ function makeContactMandatory(formContext) {
     })[0];
     
     contactAttribute.setRequiredLevel("required");
-    contactControl.setVisible("true");
+    contactControl.setVisible(true);
 }
 
 function populateForm(formContext, contact) {   
