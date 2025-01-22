@@ -1,7 +1,7 @@
 async function showAccountPrimaryContact(executionContext) {
     var formContext = executionContext.getFormContext();
     
-    executionContext.getFormContext().ui.setFormNotification("v29", "INFO", "SAPC0001");
+    executionContext.getFormContext().ui.setFormNotification("v30", "INFO", "SAPC0001");
     
     try {
         var contact = await retrieveContact(formContext);
@@ -27,7 +27,7 @@ async function saveContactIfRequired(executionContext) {
     
     var accountId = formContext.getAttribute("customerid").getValue()[0].id;
     var contactId = contactAttribute.getValue()[0].id;
-    await saveAccountPrimaryContact(accountId, contactId.slice(1, contactId.length-1));
+    await saveAccountPrimaryContact(accountId.slice(1, accountId.length-1), contactId.slice(1, contactId.length-1));
     
     toggleContactMandatory(formContext, false);
 }
@@ -39,6 +39,13 @@ async function saveAccountPrimaryContact(accountId, contactId) {
             accountId,
             {
                 "primarycontactid@odata.bind": `/contacts(${contactId})`
+            }
+        );
+        await Xrm.WebApi.updateRecord(
+            "contact",
+            contactId,
+            {
+                "parentcustomerid@odata.bind": `/accounts(${accountId})`
             }
         );
     } catch {
