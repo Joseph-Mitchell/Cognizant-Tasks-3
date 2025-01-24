@@ -23,12 +23,12 @@ namespace CancelNewCaseIfExistingWithSameCustomer
             catch (InvalidPluginExecutionException e)
             {
                 tracer.Trace("Caught a plugin exception: " + e.Message);
-                throw e;
+                throw;
             }
             catch (Exception e)
             {
                 tracer.Trace("Caught an unexpected exception: " + e.Message);
-                throw new InvalidPluginExecutionException(e.Message);
+                throw new InvalidPluginExecutionException("An unexpected error occurred: " + e.Message);
             }
         }
 
@@ -39,7 +39,7 @@ namespace CancelNewCaseIfExistingWithSameCustomer
 
             Entity newCase = (Entity)context.InputParameters["Target"];
             if (!newCase.Attributes.ContainsKey("customerid"))
-                throw new InvalidPluginExecutionException("Could not retrieve cutomer from case");
+                throw new InvalidPluginExecutionException("Could not retrieve customer from case");
 
             return newCase;
         }
@@ -65,7 +65,7 @@ namespace CancelNewCaseIfExistingWithSameCustomer
             }
             catch (Exception e)
             {
-                throw new InvalidPluginExecutionException("Error retrieving existing cases");
+                throw new InvalidPluginExecutionException("Error retrieving existing cases: " + e.Message);
             }
         }
     }
