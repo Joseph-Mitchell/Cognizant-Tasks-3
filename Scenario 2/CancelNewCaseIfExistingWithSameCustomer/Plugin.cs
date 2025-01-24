@@ -15,10 +15,16 @@ namespace CancelNewCaseIfExistingWithSameCustomer
 
             try
             {
+                tracer.Trace("CancelNewCaseIfExistingWithSameCustomer: Beginning Execution");
+
+                tracer.Trace("Getting new case");
                 Entity newCase = GetEntity(context);
+
+                tracer.Trace("Building query");
                 QueryExpression query = BuildQuery(((EntityReference)newCase["customerid"]).Id.ToString());
 
-                if (CustomerHasExistingCases(service, query))
+                tracer.Trace("Checking existing cases with same customer");
+                if (CustomerHasExistingCases(service, query, tracer))
                     throw new InvalidPluginExecutionException("An existing case belonging to this customer already exists. Check the existing case and either make changes to it or close it before opening a new case.");
             }
             catch (InvalidPluginExecutionException e)
@@ -57,12 +63,13 @@ namespace CancelNewCaseIfExistingWithSameCustomer
             return query;
         }
 
-        private bool CustomerHasExistingCases(IOrganizationService service, QueryExpression query)
+        private bool CustomerHasExistingCases(IOrganizationService service, QueryExpression query, ITracingService tracer)
         {
             try
             {
                 EntityCollection collection = service.RetrieveMultiple(query);
                 int numEntities = collection.Entities.Count;
+                tracer.Trace("Existing cases: " + numEntities);
                 return numEntities > 0;
             }
             catch (Exception e)
