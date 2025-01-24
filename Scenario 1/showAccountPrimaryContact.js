@@ -98,24 +98,28 @@ function toggleContactMandatory(formContext, mandatory) {
 async function saveContactIfRequired(executionContext) {
     const formContext = executionContext.getFormContext();
 
-    let contactAttribute = formContext.getAttribute("primarycontactid");
-    if (contactAttribute.getRequiredLevel() != "required")
-        return;
+    try {
+        let contactAttribute = formContext.getAttribute("primarycontactid");
+        if (contactAttribute.getRequiredLevel() != "required")
+            return;
     
-    let accountId = formContext.getAttribute("customerid").getValue()[0].id;
-    let contactId = contactAttribute.getValue()[0].id;
+        let accountId = formContext.getAttribute("customerid").getValue()[0].id;
+        let contactId = contactAttribute.getValue()[0].id;
     
-    //Remove curly brackets at start and end of ids
-    accountId = accountId.replace("/[{}]/g", "");
-    contactId = contactId.replace("/[{}]/g", "");
+        //Remove curly brackets at start and end of ids
+        accountId = accountId.replace("/[{}]/g", "");
+        contactId = contactId.replace("/[{}]/g", "");
     
-    //Stop contact being set as the accounts primary contact if
-    //contact is not already associated with account
-    if (!await checkAccountOwnsContact(accountId, contactId))
-        return;
+        if (!await checkAccountOwnsContact(accountId, contactId)) {
+            executionContext.getEventArgs().preventDefault();
+            throw new Error("Chosen Contact must be associated with the given Account");
+        }
     
-    await saveAccountPrimaryContact(accountId, contactId);
-    toggleContactMandatory(formContext, false);
+        await saveAccountPrimaryContact(accountId, contactId);
+        toggleContactMandatory(formContext, false);
+    } catch(e) {
+        Xrm.Navigation.openErrorDialog({ message: e.message });
+    }
 }
 
 async function checkAccountOwnsContact(accountId, contactId) {
@@ -125,13 +129,13 @@ async function checkAccountOwnsContact(accountId, contactId) {
             contactId
         ));
         
-        if (contact._parentcustomerid_value.toUpperCase() === accountId)
-            return true;
+        if (contact._parentcustomerid_value === null || contact._parentcustomerid_value.toUpperCase() !== accountId)
+            return false;
     } catch(e) {
-        Xrm.Navigation.openErrorDialog({ message: "Error retrieving parent account from contact" });
+        throw new Error("Error retrieving parent account from contact");
     }
     
-    return false;
+    return true;
 }
 
 async function saveAccountPrimaryContact(accountId, contactId) {
@@ -144,6 +148,6 @@ async function saveAccountPrimaryContact(accountId, contactId) {
             }
         );
     } catch {
-        Xrm.Navigation.openErrorDialog({ message: "Error saving primary contact to account" });
+        throw new Error("Error saving primary contact to account");
     }
 }
