@@ -2,8 +2,8 @@ async function showAccountPrimaryContact(executionContext) {
     const formContext = executionContext.getFormContext();
     
     try {
-        if (contact == null) {
         let contact = await retrieveContact(formContext);
+        if (contact === null) {
             toggleContactMandatory(formContext, true);
         } else {       
             populateForm(formContext, contact);
@@ -27,8 +27,8 @@ async function saveContactIfRequired(executionContext) {
     let contactId = contactAttribute.getValue()[0].id;
     
     //Remove curly brackets at start and end of ids
-    accountId = accountId.slice(1, accountId.length - 1);
-    contactId = contactId.slice(1, contactId.length - 1);
+    accountId = accountId.replace("/[{}]/g", "");
+    contactId = contactId.replace("/[{}]/g", "");
     
     //Stop contact being set as the accounts primary contact if
     //contact is not already associated with account
@@ -46,7 +46,7 @@ async function checkAccountOwnsContact(accountId, contactId) {
             contactId
         ));
         
-        if (contact._parentcustomerid_value.toUpperCase() == accountId)
+        if (contact._parentcustomerid_value.toUpperCase() === accountId)
             return true;
     } catch(e) {
         Xrm.Navigation.openErrorDialog({ message: "Error retrieving parent account from contact" });
@@ -88,25 +88,25 @@ async function retrieveContact(formContext) {
 }
 
 function getCustomerAttribute(formContext) {
-    if (customerAttribute == null)
     let customerAttribute = formContext.getAttribute("customerid");
+    if (customerAttribute === null)
         throw new Error("The Customer attribute could not be found in the Case table.");
     
     return customerAttribute;
 }
 
 function getCustomerRecord(customerAttribute) {
-    if (customerRecordArray == null || customerRecordArray.length == 0)
     let customerRecordArray = customerAttribute.getValue();
+    if (customerRecordArray === null || customerRecordArray.length === 0)
         throw new Error();
     
     return customerRecordArray[0];
 }
 
 function toggleContactMandatory(formContext, mandatory) {
-        if (control.controlDescriptor.Label == "Account Primary Contact")
     let contactAttribute = formContext.getAttribute("primarycontactid");
     let contactControl = contactAttribute.controls.get((control) => {
+        if (control.controlDescriptor.Label === "Account Primary Contact")
             return true;
     })[0];
     
@@ -129,16 +129,16 @@ function populateForm(formContext, contact) {
 }
 
 function hideEmptyFields(formContext, contact) {
-    if (primaryContactForm == null)
     let primaryContactForm = formContext.ui.quickForms.get("accountcontact_qfc");
+    if (primaryContactForm === null)
         throw new Error("The quick form 'accountcontact_qfc' could not be found");
     
-    if (contact.emailaddress1 == null)
+    if (contact.emailaddress1 === null)
         primaryContactForm.getControl("emailaddress1").setVisible(false);
     else
         primaryContactForm.getControl("emailaddress1").setVisible(true);
     
-    if (contact.mobilephone == null)
+    if (contact.mobilephone === null)
         primaryContactForm.getControl("mobilephone").setVisible(false);
     else
         primaryContactForm.getControl("mobilephone").setVisible(true);
