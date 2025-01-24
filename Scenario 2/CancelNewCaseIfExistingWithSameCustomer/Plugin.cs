@@ -44,14 +44,14 @@ namespace CancelNewCaseIfExistingWithSameCustomer
             return newCase;
         }
 
-        private QueryExpression BuildQuery(string cutsomerId) 
+        private QueryExpression BuildQuery(string customerId) 
         {
             QueryExpression query = new QueryExpression("account")
             {
                 TopCount = 1,
-                ColumnSet = new ColumnSet()
+                ColumnSet = new ColumnSet("customerid")
             };
-            query.Criteria.AddCondition("customerid", ConditionOperator.Equal, cutsomerId);
+            query.Criteria.AddCondition("customerid", ConditionOperator.Equal, customerId);
 
             return query;
         }
