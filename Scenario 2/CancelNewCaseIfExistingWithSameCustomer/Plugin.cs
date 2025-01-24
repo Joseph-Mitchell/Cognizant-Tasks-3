@@ -17,7 +17,7 @@ namespace CancelNewCaseIfExistingWithSameCustomer
                 Entity newCase = GetEntity(context);
                 QueryExpression query = BuildQuery((string)newCase["customerid"]);
 
-                if (!CustomerHasExistingCases(service, query))
+                if (CustomerHasExistingCases(service, query))
                     throw new InvalidPluginExecutionException("An existing case belonging to this customer already exists. Check the existing case and either make changes to it or close it before opening a new case.");
             }
             catch (InvalidPluginExecutionException e)
