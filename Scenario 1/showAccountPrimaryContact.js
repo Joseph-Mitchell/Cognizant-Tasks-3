@@ -1,9 +1,9 @@
 async function showAccountPrimaryContact(executionContext) {
-    var formContext = executionContext.getFormContext();
+    const formContext = executionContext.getFormContext();
     
     try {
-        var contact = await retrieveContact(formContext);
         if (contact == null) {
+        let contact = await retrieveContact(formContext);
             toggleContactMandatory(formContext, true);
         } else {       
             populateForm(formContext, contact);
@@ -17,14 +17,14 @@ async function showAccountPrimaryContact(executionContext) {
 }
 
 async function saveContactIfRequired(executionContext) {
-    var formContext = executionContext.getFormContext();
+    const formContext = executionContext.getFormContext();
 
-    var contactAttribute = formContext.getAttribute("primarycontactid");
+    let contactAttribute = formContext.getAttribute("primarycontactid");
     if (contactAttribute.getRequiredLevel() != "required")
         return;
     
-    var accountId = formContext.getAttribute("customerid").getValue()[0].id;
-    var contactId = contactAttribute.getValue()[0].id;
+    let accountId = formContext.getAttribute("customerid").getValue()[0].id;
+    let contactId = contactAttribute.getValue()[0].id;
     
     //Remove curly brackets at start and end of ids
     accountId = accountId.slice(1, accountId.length - 1);
@@ -41,7 +41,7 @@ async function saveContactIfRequired(executionContext) {
 
 async function checkAccountOwnsContact(accountId, contactId) {
     try {
-        var contact = (await Xrm.WebApi.retrieveRecord(
+        let contact = (await Xrm.WebApi.retrieveRecord(
             "contact",
             contactId
         ));
@@ -70,14 +70,13 @@ async function saveAccountPrimaryContact(accountId, contactId) {
 }
 
 async function retrieveContact(formContext) {
-    var customerAttribute = getCustomerAttribute(formContext);  
-    
-    var customerRecord = getCustomerRecord(customerAttribute);
+    let customerAttribute = getCustomerAttribute(formContext);     
+    let customerRecord = getCustomerRecord(customerAttribute);
     if (customerRecord.entityType != "account")
         throw new Error();
 
     try {
-        var account = await Xrm.WebApi.retrieveRecord(
+        let account = await Xrm.WebApi.retrieveRecord(
             "account",
             customerRecord.id,
             "?$select=primarycontactid&$expand=primarycontactid($select=contactid,fullname,emailaddress1,mobilephone)"
@@ -89,25 +88,25 @@ async function retrieveContact(formContext) {
 }
 
 function getCustomerAttribute(formContext) {
-    var customerAttribute = formContext.getAttribute("customerid");
     if (customerAttribute == null)
+    let customerAttribute = formContext.getAttribute("customerid");
         throw new Error("The Customer attribute could not be found in the Case table.");
     
     return customerAttribute;
 }
 
 function getCustomerRecord(customerAttribute) {
-    var customerRecordArray = customerAttribute.getValue();
     if (customerRecordArray == null || customerRecordArray.length == 0)
+    let customerRecordArray = customerAttribute.getValue();
         throw new Error();
     
     return customerRecordArray[0];
 }
 
 function toggleContactMandatory(formContext, mandatory) {
-    var contactAttribute = formContext.getAttribute("primarycontactid");
-    var contactControl = contactAttribute.controls.get((control) => {
         if (control.controlDescriptor.Label == "Account Primary Contact")
+    let contactAttribute = formContext.getAttribute("primarycontactid");
+    let contactControl = contactAttribute.controls.get((control) => {
             return true;
     })[0];
     
@@ -121,7 +120,7 @@ function toggleContactMandatory(formContext, mandatory) {
 }
 
 function populateForm(formContext, contact) {   
-    var contactRecord = {
+    let contactRecord = {
         entityType: "contact",
         id: contact.contactid,
         name: contact.fullname
@@ -130,8 +129,8 @@ function populateForm(formContext, contact) {
 }
 
 function hideEmptyFields(formContext, contact) {
-    var primaryContactForm = formContext.ui.quickForms.get("accountcontact_qfc");
     if (primaryContactForm == null)
+    let primaryContactForm = formContext.ui.quickForms.get("accountcontact_qfc");
         throw new Error("The quick form 'accountcontact_qfc' could not be found");
     
     if (contact.emailaddress1 == null)
