@@ -6,6 +6,7 @@ async function showAccountPrimaryContact(executionContext) {
         if (contact === null) {
             toggleContactMandatory(formContext, true);
         } else {       
+            toggleContactMandatory(formContext, false);
             populateForm(formContext, contact);
             hideEmptyFields(formContext, contact);
         }
@@ -107,8 +108,8 @@ async function saveContactIfRequired(executionContext) {
         let contactId = contactAttribute.getValue()[0].id;
     
         //Remove curly brackets at start and end of ids
-        accountId = accountId.replace("/[{}]/g", "");
-        contactId = contactId.replace("/[{}]/g", "");
+        accountId = accountId.replace(/[{}]/g, "");
+        contactId = contactId.replace(/[{}]/g, "");
     
         if (!await checkAccountOwnsContact(accountId, contactId)) {
             executionContext.getEventArgs().preventDefault();

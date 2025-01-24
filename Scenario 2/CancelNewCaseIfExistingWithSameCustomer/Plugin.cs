@@ -9,13 +9,14 @@ namespace CancelNewCaseIfExistingWithSameCustomer
         public void Execute(IServiceProvider serviceProvider)
         {
             IPluginExecutionContext context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
-            IOrganizationService service = (IOrganizationService)serviceProvider.GetService(typeof(IOrganizationService));
+            IOrganizationServiceFactory serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
+            IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
             ITracingService tracer = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
 
             try
             {
                 Entity newCase = GetEntity(context);
-                QueryExpression query = BuildQuery((string)newCase["customerid"]);
+                QueryExpression query = BuildQuery(((EntityReference)newCase["customerid"]).Id.ToString());
 
                 if (CustomerHasExistingCases(service, query))
                     throw new InvalidPluginExecutionException("An existing case belonging to this customer already exists. Check the existing case and either make changes to it or close it before opening a new case.");
@@ -46,9 +47,9 @@ namespace CancelNewCaseIfExistingWithSameCustomer
 
         private QueryExpression BuildQuery(string customerId) 
         {
-            QueryExpression query = new QueryExpression("account")
+            QueryExpression query = new QueryExpression("incident")
             {
-                TopCount = 1,
+                TopCount = 2,
                 ColumnSet = new ColumnSet("customerid")
             };
             query.Criteria.AddCondition("customerid", ConditionOperator.Equal, customerId);
@@ -60,7 +61,8 @@ namespace CancelNewCaseIfExistingWithSameCustomer
         {
             try
             {
-                int numEntities = service.RetrieveMultiple(query).TotalRecordCount;
+                EntityCollection collection = service.RetrieveMultiple(query);
+                int numEntities = collection.Entities.Count;
                 return numEntities > 0;
             }
             catch (Exception e)
