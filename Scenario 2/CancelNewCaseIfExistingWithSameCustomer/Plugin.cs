@@ -55,10 +55,11 @@ namespace CancelNewCaseIfExistingWithSameCustomer
         {
             QueryExpression query = new QueryExpression("incident")
             {
-                TopCount = 2,
-                ColumnSet = new ColumnSet("customerid")
+                TopCount = 1,
+                ColumnSet = new ColumnSet("customerid", "statuscode")
             };
             query.Criteria.AddCondition("customerid", ConditionOperator.Equal, customerId);
+            query.Criteria.AddCondition("statuscode", ConditionOperator.LessThan, 5); //Status code >= 5 are resolved or cancelled 
 
             return query;
         }
@@ -67,9 +68,11 @@ namespace CancelNewCaseIfExistingWithSameCustomer
         {
             try
             {
-                EntityCollection collection = service.RetrieveMultiple(query);
-                int numEntities = collection.Entities.Count;
+                EntityCollection existingCases = service.RetrieveMultiple(query);
+                int numEntities = existingCases.Entities.Count;
+
                 tracer.Trace("Existing cases: " + numEntities);
+
                 return numEntities > 0;
             }
             catch (Exception e)
