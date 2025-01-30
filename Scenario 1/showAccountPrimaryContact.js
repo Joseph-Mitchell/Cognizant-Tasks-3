@@ -68,12 +68,12 @@ function hideEmptyFields(formContext, contact) {
     if (contact.emailaddress1 === null)
         primaryContactForm.getControl("emailaddress1").setVisible(false);
     else
-    primaryContactForm.getControl("emailaddress1").setVisible(true);
+        primaryContactForm.getControl("emailaddress1").setVisible(true);
 
-if (contact.mobilephone === null)
-    primaryContactForm.getControl("mobilephone").setVisible(false);
-else
-primaryContactForm.getControl("mobilephone").setVisible(true);
+    if (contact.mobilephone === null)
+        primaryContactForm.getControl("mobilephone").setVisible(false);
+    else
+        primaryContactForm.getControl("mobilephone").setVisible(true);
 }
 
 //----- Shared functions -----
@@ -104,18 +104,7 @@ async function saveContactIfRequired(executionContext) {
         if (contactAttribute.getRequiredLevel() != "required")
             return;
     
-        let accountId = formContext.getAttribute("customerid").getValue()[0].id;
-        let contactId = contactAttribute.getValue()[0].id;
-    
-        //Remove curly brackets at start and end of ids
-        accountId = accountId.replace(/[{}]/g, "");
-        contactId = contactId.replace(/[{}]/g, "");
-    
-        if (!await checkAccountOwnsContact(accountId, contactId)) {
-            executionContext.getEventArgs().preventDefault();
-            throw new Error("Chosen Contact must be associated with the given Account");
-        }
-    
+        await checkAccountOwnsContact(formContext, contactAttribute);
         await saveAccountPrimaryContact(accountId, contactId);
         toggleContactMandatory(formContext, false);
     } catch(e) {
@@ -123,7 +112,21 @@ async function saveContactIfRequired(executionContext) {
     }
 }
 
-async function checkAccountOwnsContact(accountId, contactId) {
+async function checkAccountOwnsContact(formContext, contactAttribute) {
+    let accountId = formContext.getAttribute("customerid").getValue()[0].id;
+    let contactId = contactAttribute.getValue()[0].id;
+
+    //Remove curly brackets at start and end of ids
+    accountId = accountId.replace(/[{}]/g, "");
+    contactId = contactId.replace(/[{}]/g, "");
+
+    if (!await contactHasAccountAsParent(accountId, contactId)) {
+        executionContext.getEventArgs().preventDefault();
+        throw new Error("Chosen Contact must be associated with the given Account");
+    }
+}
+
+async function contactHasAccountAsParent(accountId, contactId) {
     try {
         let contact = (await Xrm.WebApi.retrieveRecord(
             "contact",
